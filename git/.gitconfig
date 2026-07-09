@@ -1,0 +1,50 @@
+[user]
+    name = Kevin Borling
+    email = kborling@protonmail.com
+[core]
+    editor = vim
+    pager = delta
+    autocrlf = input
+    fsmonitor = true
+    untrackedCache = true
+[column]
+    ui = auto
+[branch]
+    sort = -committerdate
+[tag]
+    sort = version:refname
+[init]
+    defaultBranch = main
+[diff]
+    algorithm = histogram
+    colorMoved = plain
+    mnemonicPrefix = true
+    renames = true
+[pull]
+    rebase = true
+[push]
+    default = simple
+    autoSetupRemote = true
+    followTags = true
+[fetch]
+    prune = true
+    pruneTags = true
+    all = true
+[commit]
+    verbose = true
+[help]
+    autocorrect = prompt
+[rerere]
+    enabled = true
+    autoupdate = true
+[rebase]
+    autoSquash = true
+    autoStash = true
+    updateRefs = true
+[merge]
+    conflictstyle = zdiff3
+[interactive]
+    diffFilter = delta --color-only
+[delta]
+    navigate = true
+

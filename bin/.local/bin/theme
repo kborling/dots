@@ -1,0 +1,68 @@
+#!/bin/sh
+# theme — switch the whole desktop theme at once: kitty (live + persisted),
+# wallpaper (feh), and Emacs (emacsclient load-theme).
+#
+# Usage: theme [fleury|uwu|acme|cycle|toggle]
+#   cycle  : fleury -> uwu -> acme -> fleury   (default)
+#   toggle : flip between light (acme) and the last dark theme
+set -u
+
+THEMES="fleury uwu acme"          # fleury=dark, uwu=dark, acme=light
+DARK_DEFAULT="fleury"
+CFG="${XDG_CONFIG_HOME:-$HOME/.config}"
+STATE="$CFG/current-theme"
+KITTY_DIR="$CFG/kitty"
+WALL_DIR="$HOME/.local/share/wallpapers"
+
+current() { cat "$STATE" 2>/dev/null || echo "$DARK_DEFAULT"; }
+
+case "${1:-cycle}" in
+    cycle)
+        case "$(current)" in
+            fleury) T=uwu ;; uwu) T=acme ;; acme) T=fleury ;; *) T=fleury ;;
+        esac ;;
+    toggle)
+        if [ "$(current)" = acme ]; then
+            T="$(cat "$STATE.lastdark" 2>/dev/null || echo "$DARK_DEFAULT")"
+        else
+            current > "$STATE.lastdark" 2>/dev/null || echo "$(current)" > "$STATE.lastdark"
+            T=acme
+        fi ;;
+    fleury|uwu|acme) T="$1" ;;
+    *) echo "usage: theme [fleury|uwu|acme|cycle|toggle]" >&2; exit 1 ;;
+esac
+
+# Emacs may call us with --no-emacs to sync kitty+wallpaper only (it sets its
+# own theme directly, so we skip the emacsclient round-trip).
+NOEMACS=""
+case " $* " in *" --no-emacs "*) NOEMACS=1 ;; esac
+
+# 1. kitty — persist the include for new windows, live-reload existing ones
+if [ -f "$KITTY_DIR/kitty.conf" ]; then
+    sed -i "s|^include themes/.*|include themes/${T}.conf|" "$KITTY_DIR/kitty.conf"
+fi
+for sock in /tmp/kitty /tmp/kitty-*; do
+    [ -S "$sock" ] || continue
+    kitty @ --to "unix:$sock" set-colors -a -c "$KITTY_DIR/themes/${T}.conf" 2>/dev/null
+done
+# Reload config so a theme's font_family (acme uses a heavier weight) applies.
+pkill -USR1 -x kitty 2>/dev/null || true
+
+# 2. wallpaper
+if [ -f "$WALL_DIR/void-${T}.png" ]; then
+    feh --no-fehbg --bg-fill "$WALL_DIR/void-${T}.png" 2>/dev/null
+fi
+
+# 3. Emacs (if a daemon is up, and not called with --no-emacs)
+if [ -z "$NOEMACS" ] && command -v emacsclient >/dev/null 2>&1; then
+    emacsclient -e "(progn (mapc #'disable-theme custom-enabled-themes) (load-theme '${T} t))" >/dev/null 2>&1
+fi
+
+# 4. StumpWM mode-line / palette (if running)
+STUMPISH="$HOME/.stumpwm.d/stumpwm-contrib/util/stumpish/stumpish"
+if [ -x "$STUMPISH" ] && [ -n "${DISPLAY:-}" ]; then
+    "$STUMPISH" kdb/apply-theme "$T" >/dev/null 2>&1
+fi
+
+echo "$T" > "$STATE"
+echo "theme: $T"

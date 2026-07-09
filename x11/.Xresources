@@ -1,0 +1,57 @@
+! ~/.Xresources — Kevin Borling
+! Merged at login by ~/.xinitrc (xrdb -merge)
+
+! ============================================================
+! DPI + font rendering (Xft/GTK/Qt/emacs/xterm/rofi/dmenu)
+! Panel is ~141 physical DPI on a 15.6-inch 1080p. NOTE: kitty reads Xft.dpi too,
+! so this also scales your terminal (11pt tuned at 96). Kept at 96 so kitty
+! stays as tuned; bump to 106-110 for slightly larger GTK/Xft UI if desired.
+! ============================================================
+Xft.dpi:        96
+Xft.antialias:  true
+Xft.hinting:    true
+Xft.hintstyle:  hintslight
+Xft.rgba:       rgb
+Xft.lcdfilter:  lcddefault
+Xft.autohint:   false
+
+! ============================================================
+! Fleury color scheme (from kitty themes/fleury.conf)
+! ============================================================
+*.foreground:   #b99468
+*.background:   #020202
+*.cursorColor:  #00EE00
+
+! black
+*.color0:       #020202
+*.color8:       #222425
+! red
+*.color1:       #bd2d2d
+*.color9:       #ff0000
+! green
+*.color2:       #00EE00
+*.color10:      #6eb535
+! yellow
+*.color3:       #edb211
+*.color11:      #f0c674
+! blue
+*.color4:       #2895c7
+*.color12:      #2895c7
+! magenta
+*.color5:       #dc7575
+*.color13:      #c9598a
+! cyan
+*.color6:       #8ffff2
+*.color14:      #9ba290
+! white
+*.color7:       #b99468
+*.color15:      #fcaa05
+
+! ============================================================
+! xterm (fallback terminal)
+! ============================================================
+XTerm*faceName:       JetBrains Mono
+XTerm*faceSize:       11
+XTerm*termName:       xterm-256color
+XTerm*selectToClipboard: true
+XTerm*saveLines:      10000

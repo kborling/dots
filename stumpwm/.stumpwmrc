@@ -1,0 +1,318 @@
+;; -*- lisp -*-
+;; StumpWM Configuration — Kevin Borling
+;; Void Linux | PipeWire | Kitty | JetBrains Mono
+(in-package :stumpwm)
+
+;; ============================================================
+;; Modules
+;; ============================================================
+
+(set-module-dir "~/.stumpwm.d/stumpwm-contrib")
+
+;; GTK+3 scrolling fix for external mouse
+(setf (getenv "GDK_CORE_DEVICE_EVENTS") "1")
+
+(setq *startup-message* "^3Lisp ^2^bsystem operational.")
+
+;; ============================================================
+;; Fonts — JetBrains Mono via TTF
+;; ============================================================
+
+;; TrueType fonts (JetBrains Mono). Isolated in ~/.stumpwm.d/fonts.lisp and
+;; loaded defensively: clx-truetype references its package at READ time, so a
+;; missing library would otherwise abort this entire file. If font setup fails
+;; we stay on the core X font and keep loading the rest of the config.
+(or (ignore-errors
+      (load (merge-pathnames ".stumpwm.d/fonts.lisp" (user-homedir-pathname)))
+      t)
+    (message "^1*TTF fonts unavailable — using core font. See ~/.stumpwm.d/fonts.lisp"))
+
+;; ============================================================
+;; Colors — fleury theme
+;; ============================================================
+
+;; StumpWM color table (0-7):
+;; 0=black 1=red 2=green 3=yellow 4=blue 5=magenta 6=cyan 7=white
+(setf *colors*
+      '("#020202"    ; 0 bg (rich-black)
+        "#dc7575"    ; 1 red (dusty-rose)
+        "#2ab34f"    ; 2 green (comment-green)
+        "#b99468"    ; 3 yellow (light-bronze)
+        "#2895c7"    ; 4 blue (sky-blue)
+        "#c9598a"    ; 5 magenta (mauve-pink)
+        "#8ffff2"    ; 6 cyan (aqua-ice)
+        "#686868"))  ; 7 fg (medium-gray)
+(update-color-map (current-screen))
+
+(set-bg-color "#020202")
+(set-fg-color "#b99468")
+(set-win-bg-color "#212121")
+(set-border-color "#212121")
+(set-focus-color "#b99468")
+(set-unfocus-color "#121212")
+
+;; ============================================================
+;; Window settings
+;; ============================================================
+
+(setf *mouse-focus-policy* :click
+      *window-border-style* :thin
+      *window-format* "%n%s %c (%t)"
+      *window-name-source* :title)
+
+;; Message / input bar
+(setf *message-window-gravity* :center
+      *input-window-gravity* :center
+      *message-window-padding* 10
+      *timeout-wait* 5)
+
+;; Repack window numbers on close
+(add-hook *destroy-window-hook*
+          (lambda (win) (declare (ignore win))
+            (repack-window-numbers)))
+
+;; ============================================================
+;; Mode line
+;; ============================================================
+
+(setf *mode-line-timeout* 5
+      *mode-line-position* :top
+      *mode-line-background-color* "#1a120b"
+      *mode-line-foreground-color* "#e7aa4d"
+      *mode-line-border-color* "#1a120b"
+      *mode-line-border-width* 0)
+
+;; Current-window highlight in %W: subtle bronze background instead of the
+;; harsh reverse-video default ("^R~A^r").
+(setf *mode-line-highlight-template* "^(:bg \"#3a2c17\")^(:fg \"#fcaa05\") ~A ^n")
+
+;; Clock via the built-in %d directive — no per-refresh shell-out to `date`.
+(setf *time-modeline-string* "%a %b %e  %l:%M %p")
+
+(load-module "battery-portable")
+
+(setf *screen-mode-line-format*
+      (list
+       "^(:fg \"#fcaa05\") %n ^n"            ; group
+       "^(:fg \"#63523d\")│^n "             ; separator
+       "%W"                                  ; windows (current one highlighted)
+       "^>"                                  ; right-align the rest
+       "%B"                                  ; battery
+       "  ^(:fg \"#63523d\")│^n "           ; separator
+       "^(:fg \"#e7aa4d\")%d ^n"))           ; date / time
+
+(enable-mode-line (current-screen) (current-head) t)
+
+;; System tray (docks blueman-applet etc.). Needs the xembed CL lib, pulled
+;; from Quicklisp here. Wrapped so a tray failure can't abort the rest of the
+;; rc (find-symbol avoids a read-time dependency on the stumptray package).
+(or (ignore-errors
+      (ql:quickload :xembed :silent t)
+      (load-module "stumptray")
+      (funcall (find-symbol "STUMPTRAY" :stumptray))
+      t)
+    (message "^1*System tray unavailable (xembed/stumptray)."))
+
+;; ============================================================
+;; Groups (workspaces)
+;; ============================================================
+
+(setf (group-name (first (screen-groups (current-screen)))) "code")
+(gnewbg "web")
+(gnewbg "work")
+(gnewbg "music")
+(gnewbg "chat")
+(gnewbg "misc")
+
+;; ============================================================
+;; Key bindings
+;; ============================================================
+
+;; --- App launchers (C-t prefix) ---
+
+(defcommand kdb/terminal () ()
+  "Launch kitty terminal."
+  (run-or-raise "kitty" '(:class "kitty")))
+
+(defcommand kdb/emacs () ()
+  "Start Emacs or switch to it."
+  (run-or-raise "emacsclient -c -a=''" '(:class "Emacs")))
+
+(defcommand kdb/firefox () ()
+  "Start Firefox or switch to it."
+  (run-or-raise "firefox" '(:class "firefox")))
+
+(defcommand kdb/brave () ()
+  "Start Brave or switch to it."
+  (run-or-raise "flatpak run com.brave.Browser" '(:class "Brave-browser")))
+
+(defcommand kdb/dmenu () ()
+  "Launch dmenu, colored to match the current theme."
+  (run-shell-command "~/.local/bin/dmenu-themed"))
+
+(defcommand kdb/file-manager () ()
+  "Launch file manager."
+  (run-or-raise "pcmanfm-qt" '(:class "pcmanfm-qt")))
+
+(define-key *root-map* (kbd "c")   "kdb/terminal")
+(define-key *root-map* (kbd "C-c") "kdb/terminal")
+(define-key *root-map* (kbd "e")   "kdb/emacs")
+(define-key *root-map* (kbd "C-e") "kdb/emacs")
+(define-key *root-map* (kbd "o")   "kdb/firefox")
+(define-key *root-map* (kbd "C-o") "kdb/brave")
+(define-key *root-map* (kbd "/")   "kdb/dmenu")
+(define-key *root-map* (kbd "f")   "kdb/file-manager")
+
+;; --- Workspace switching (C-t C-1..6) ---
+
+(defcommand kdb/change-workspace (n) ((:string n))
+  "Switch workspace with message."
+  (run-commands (concatenate 'string "gselect " n))
+  (echo (concatenate 'string ">> " n)))
+
+(define-key *root-map* (kbd "C-1") "kdb/change-workspace code")
+(define-key *root-map* (kbd "C-2") "kdb/change-workspace web")
+(define-key *root-map* (kbd "C-3") "kdb/change-workspace work")
+(define-key *root-map* (kbd "C-4") "kdb/change-workspace music")
+(define-key *root-map* (kbd "C-5") "kdb/change-workspace chat")
+(define-key *root-map* (kbd "C-6") "kdb/change-workspace misc")
+
+;; --- Move window to workspace (C-t M-1..6) ---
+
+(define-key *root-map* (kbd "M-1") "gmove code")
+(define-key *root-map* (kbd "M-2") "gmove web")
+(define-key *root-map* (kbd "M-3") "gmove work")
+(define-key *root-map* (kbd "M-4") "gmove music")
+(define-key *root-map* (kbd "M-5") "gmove chat")
+(define-key *root-map* (kbd "M-6") "gmove misc")
+
+;; --- Window management ---
+
+(define-key *root-map* (kbd "Q")   "quit-confirm")
+(define-key *root-map* (kbd "R")   "loadrc")
+(define-key *root-map* (kbd "d")   "remove-split")
+
+;; ============================================================
+;; Top-level keys (no prefix) — media / hardware
+;; ============================================================
+
+(defcommand vol-up () ()
+  "Raise volume 5%."
+  (run-shell-command "wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+"))
+
+(defcommand vol-down () ()
+  "Lower volume 5%."
+  (run-shell-command "wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"))
+
+(defcommand vol-mute () ()
+  "Toggle mute."
+  (run-shell-command "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"))
+
+(defcommand mic-mute () ()
+  "Toggle mic mute."
+  (run-shell-command "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"))
+
+(defcommand brightness-up () ()
+  "Increase brightness."
+  (run-shell-command "brightnessctl set +5%"))
+
+(defcommand brightness-down () ()
+  "Decrease brightness."
+  (run-shell-command "brightnessctl set 5%-"))
+
+(defcommand screenshot () ()
+  "Screenshot selection to clipboard."
+  (run-shell-command "maim -s | xclip -selection clipboard -t image/png")
+  (echo "Screenshot copied to clipboard"))
+
+(defcommand screenshot-full () ()
+  "Full screenshot to ~/Pictures/."
+  (run-shell-command "maim ~/Pictures/screenshot-$(date +%s).png")
+  (echo "Screenshot saved"))
+
+(defcommand lock-screen () ()
+  "Lock screen."
+  (run-shell-command "i3lock -c 020202"))
+
+;; XF86 media keys
+(define-key *top-map* (kbd "XF86AudioRaiseVolume")  "vol-up")
+(define-key *top-map* (kbd "XF86AudioLowerVolume")  "vol-down")
+(define-key *top-map* (kbd "XF86AudioMute")         "vol-mute")
+(define-key *top-map* (kbd "XF86AudioMicMute")      "mic-mute")
+(define-key *top-map* (kbd "XF86MonBrightnessUp")   "brightness-up")
+(define-key *top-map* (kbd "XF86MonBrightnessDown") "brightness-down")
+
+;; Screenshot: Print = selection, Shift+Print = full
+(define-key *top-map* (kbd "Print")   "screenshot")
+(define-key *top-map* (kbd "S-Print") "screenshot-full")
+
+;; Lock: C-t L
+(define-key *root-map* (kbd "L") "lock-screen")
+
+;; ============================================================
+;; Theme switching (kitty + wallpaper + emacs via ~/.local/bin/theme)
+;; ============================================================
+
+;; Per-theme StumpWM colors (mode-line / borders / palette). Provides the
+;; kdb/apply-theme command that ~/.local/bin/theme calls on each switch.
+(ignore-errors
+  (load (merge-pathnames ".stumpwm.d/theme-colors.lisp" (user-homedir-pathname))))
+
+;; IMPORTANT: run the switcher ASYNC (no `t`). The theme script calls back into
+;; StumpWM via `stumpish kdb/apply-theme`; a synchronous run-shell-command would
+;; block StumpWM's event loop waiting on a command that needs that same loop —
+;; a deadlock that freezes the WM (keyboard grab stuck). Feedback comes from
+;; kdb/apply-theme's own echo.
+(defcommand kdb/cycle-theme () ()
+  "Cycle desktop theme: fleury -> uwu -> acme."
+  (run-shell-command "~/.local/bin/theme cycle"))
+
+(defcommand kdb/toggle-theme () ()
+  "Toggle between light (acme) and the last dark theme."
+  (run-shell-command "~/.local/bin/theme toggle"))
+
+;; C-t t = cycle all three, C-t T = light/dark toggle
+(define-key *root-map* (kbd "t") "kdb/cycle-theme")
+(define-key *root-map* (kbd "T") "kdb/toggle-theme")
+
+;; ============================================================
+;; Slynk — connect from Emacs via SLY
+;; ============================================================
+
+(ql:quickload :slynk)
+
+(defcommand slynk-start () ()
+  "Start Slynk server for SLY."
+  (slynk:create-server :port 4005 :dont-close t)
+  (echo "Slynk started on port 4005. M-x sly-connect RET localhost RET 4005"))
+
+(defcommand slynk-stop () ()
+  "Stop Slynk server."
+  (slynk:stop-server 4005)
+  (echo "Slynk stopped."))
+
+(define-key *root-map* (kbd "C-s") "slynk-start")
+
+;; ============================================================
+;; Startup commands
+;; ============================================================
+
+(run-shell-command "xsetroot -cursor_name left_ptr")
+
+;; Restore the last-used theme AFTER StumpWM owns the root: recolor the bar to
+;; match and set the wallpaper here (setting it in ~/.xinitrc gets clobbered to
+;; grey when StumpWM takes over). Defaults to fleury. kitty persists on its own.
+(let ((theme (handler-case
+                 (with-open-file (f (merge-pathnames ".config/current-theme"
+                                                     (user-homedir-pathname)))
+                   (string-trim '(#\Space #\Newline #\Tab) (read-line f)))
+               (error () "fleury"))))
+  (when (zerop (length theme)) (setf theme "fleury"))
+  (ignore-errors (kdb/apply-theme theme))
+  (run-shell-command
+   (format nil "feh --no-fehbg --bg-fill ~a"
+           (namestring (merge-pathnames
+                        (format nil ".local/share/wallpapers/void-~a.png" theme)
+                        (user-homedir-pathname))))))
+
+(run-shell-command "emacs --daemon")

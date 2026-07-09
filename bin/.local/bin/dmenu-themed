@@ -1,0 +1,25 @@
+#!/bin/sh
+# dmenu-themed — dmenu with colors matching the current desktop theme
+# (~/.config/current-theme, same palettes as the StumpWM mode-line).
+#
+# Default: app launcher (dmenu_run). With --pipe, reads a menu from stdin
+# (plain dmenu) so custom menus get themed too. Extra args pass through.
+set -u
+
+THEME="$(cat "${XDG_CONFIG_HOME:-$HOME/.config}/current-theme" 2>/dev/null || echo fleury)"
+
+case "$THEME" in
+    uwu)  NB='#1B2224' NF='#C5C8C9' SB='#2F3638' SF='#6CBAD1' ;;
+    acme) NB='#E8EB98' NF='#000000' SB='#C8DFC8' SF='#000000' ;;
+    *)    NB='#1a120b' NF='#b99468' SB='#3a2c17' SF='#fcaa05' ;;
+esac
+
+FONT='JetBrains Mono:size=11'
+
+CMD=dmenu_run
+if [ "${1:-}" = "--pipe" ]; then
+    CMD=dmenu
+    shift
+fi
+
+exec "$CMD" -fn "$FONT" -nb "$NB" -nf "$NF" -sb "$SB" -sf "$SF" "$@"
