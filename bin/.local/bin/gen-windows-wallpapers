@@ -1,0 +1,88 @@
+#!/usr/bin/env python3
+"""Generate the windows-logo theme wallpapers (wallpapers/windows/).
+
+Same layout as the void-logo wallpapers: radial background glow, logo with a
+vertical gradient centered at (1920, 950), monospace label at baseline 1505.
+Colors were sampled from the void-*.png originals so the two sets stay in sync.
+
+Usage: gen-windows-wallpapers [outdir]   (default: current directory)
+Needs pycairo and JetBrains Mono.
+"""
+import os
+import sys
+
+import cairo
+
+W, H = 3840, 2160
+CX, LOGO_CY = 1920, 950          # logo center (matches void ring center)
+LOGO_SIZE = 680                  # void ring is 798 dia; a square reads heavier
+GAP = 46                         # gap between panes
+BASELINE = 1505
+FONT = "JetBrains Mono"
+FONT_SIZE = 59
+
+THEMES = {
+    # bg stops: (t, (r,g,b)) along a radial gradient from image center to corner
+    "fleury": {
+        "bg": [(0.0, (19, 18, 21)), (0.21, (17, 16, 19)), (0.29, (15, 14, 18)),
+               (0.47, (10, 10, 14)), (1.0, (6, 6, 9))],
+        "grad": ((187, 149, 101), (252, 170, 4)),
+        "text": (91, 76, 57),
+    },
+    "uwu": {
+        "bg": [(0.0, (25, 37, 40)), (0.21, (24, 36, 39)), (0.29, (24, 36, 38)),
+               (0.47, (21, 29, 31)), (1.0, (17, 23, 25))],
+        "grad": ((108, 186, 209), (178, 132, 219)),
+        "text": (120, 128, 130),
+    },
+    "acme": {
+        "bg": [(0.0, (250, 250, 230)), (0.5, (249, 249, 228)), (1.0, (244, 244, 222))],
+        "grad": ((16, 84, 176), (0, 120, 118)),
+        "text": (152, 141, 109),
+    },
+}
+
+def c(v):
+    return v / 255.0
+
+outdir = sys.argv[1] if len(sys.argv) > 1 else "."
+os.makedirs(outdir, exist_ok=True)
+
+for name, th in THEMES.items():
+    surf = cairo.ImageSurface(cairo.FORMAT_RGB24, W, H)
+    ctx = cairo.Context(surf)
+
+    # background radial glow
+    rad = cairo.RadialGradient(W / 2, H / 2, 0, W / 2, H / 2, 2203)
+    for t, (r, g, b) in th["bg"]:
+        rad.add_color_stop_rgb(t, c(r), c(g), c(b))
+    ctx.set_source(rad)
+    ctx.paint()
+
+    # windows logo: 2x2 panes, one vertical gradient across the whole grid
+    pane = (LOGO_SIZE - GAP) / 2
+    top = LOGO_CY - LOGO_SIZE / 2
+    left = CX - LOGO_SIZE / 2
+    (r1, g1, b1), (r2, g2, b2) = th["grad"]
+    lin = cairo.LinearGradient(0, top, 0, top + LOGO_SIZE)
+    lin.add_color_stop_rgb(0, c(r1), c(g1), c(b1))
+    lin.add_color_stop_rgb(1, c(r2), c(g2), c(b2))
+    ctx.set_source(lin)
+    for row in range(2):
+        for col in range(2):
+            ctx.rectangle(left + col * (pane + GAP), top + row * (pane + GAP), pane, pane)
+    ctx.fill()
+
+    # label
+    label = "windows"
+    ctx.select_font_face(FONT, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
+    ctx.set_font_size(FONT_SIZE)
+    ext = ctx.text_extents(label)
+    tr, tg, tb = th["text"]
+    ctx.set_source_rgb(c(tr), c(tg), c(tb))
+    ctx.move_to(CX - ext.x_advance / 2, BASELINE)
+    ctx.show_text(label)
+
+    out = os.path.join(outdir, f"windows-{name}.png")
+    surf.write_to_png(out)
+    print("wrote", out)
