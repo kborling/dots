@@ -1,0 +1,25 @@
+#!/bin/sh
+# SSH_ASKPASS/GIT_ASKPASS helper: prompt in the Emacs minibuffer,
+# falling back to any system askpass dialog.
+prompt="${1:-Password: }"
+EC="${EMACSCLIENT:-emacsclient}"
+
+if "$EC" --eval t >/dev/null 2>&1; then
+    p=$(printf '%s' "$prompt" | sed 's/\\/\\\\/g; s/"/\\"/g')
+    out=$("$EC" --eval "(read-passwd \"$p\")") || exit 1
+    printf '%s\n' "$out" | sed 's/^"//; s/"$//; s/\\\(.\)/\1/g'
+    exit 0
+fi
+
+for ap in /usr/libexec/ssh-askpass x11-ssh-askpass ssh-askpass ksshaskpass \
+          lxqt-openssh-askpass git-gui--askpass zenity; do
+    if command -v "$ap" >/dev/null 2>&1; then
+        case "$ap" in
+            zenity) exec zenity --password --title "$prompt" ;;
+            *) exec "$ap" "$prompt" ;;
+        esac
+    fi
+done
+
+echo "emacs-askpass: no Emacs server and no system askpass found" >&2
+exit 1

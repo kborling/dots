@@ -16,7 +16,7 @@ emacs.d) — this repo covers everything else.
 | `kitty` | kitty.conf + fleury/uwu/acme themes | Linux, macOS |
 | `lisp` | `.sbclrc` (quicklisp init) | Linux, macOS |
 | `stumpwm` | `.stumpwmrc`, `.stumpwm.d/` lisp (fonts, theme colors) | Linux |
-| `bin` | `theme` (desktop-wide theme switcher), `dmenu-themed` | Linux |
+| `bin` | `theme` (desktop-wide theme switcher), `dmenu-themed`, `emacs-askpass` | Linux (`emacs-askpass`: everywhere) |
 | `x11` | `.Xresources`, `.xinitrc` | Linux |
 | `dunst` | notification daemon (light/dark variants) | Linux |
 | `polybar` | bar configs (light/dark variants) | Linux |
