@@ -13,6 +13,7 @@ emacs.d) — this repo covers everything else.
 |---------|----------|------------|
 | `shell` | `.bashrc`, `.bash_profile`, `.inputrc` | Linux, macOS, Windows (git-bash) |
 | `git` | `.gitconfig`, `.config/git/ignore` | everywhere |
+| `ssh` | `.ssh/config` (agent/keychain settings; hosts stay in untracked `~/.ssh/config.local`) | everywhere |
 | `kitty` | kitty.conf + fleury/uwu/acme themes | Linux, macOS |
 | `lisp` | `.sbclrc` (quicklisp init) | Linux, macOS |
 | `stumpwm` | `.stumpwmrc`, `.stumpwm.d/` lisp (fonts, theme colors) | Linux |
