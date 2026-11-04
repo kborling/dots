@@ -13,6 +13,7 @@ emacs.d) — this repo covers everything else.
 |---------|----------|------------|
 | `shell` | `.bashrc`, `.bash_profile`, `.inputrc` | Linux, macOS, Windows (git-bash) |
 | `git` | `.gitconfig`, `.config/git/ignore` | everywhere |
+| `claude` | `.claude/CLAUDE.md` (global instructions for Claude Code: Org documents, working inside Emacs) | everywhere |
 | `ssh` | `.ssh/config` (agent/keychain settings; hosts stay in untracked `~/.ssh/config.local`) | everywhere |
 | `kitty` | kitty.conf + fleury/uwu/acme themes | Linux, macOS |
 | `lisp` | `.sbclrc` (quicklisp init) | Linux, macOS |
@@ -49,7 +50,7 @@ configs, back them up first or adopt them into the repo: `stow --adopt <pkg>`
 
 ```sh
 brew install stow
-cd ~/dotfiles && stow --no-folding shell git kitty lisp
+cd ~/dotfiles && stow --no-folding shell git claude kitty lisp
 ```
 
 ### Windows
@@ -62,6 +63,9 @@ git config --global include.path ~/dotfiles/git/.gitconfig
 
 # git-bash: source the shared bashrc from ~/.bashrc
 echo '. ~/dotfiles/shell/.bashrc' >> ~/.bashrc
+
+# Claude Code: import the shared CLAUDE.md (back up any existing one first)
+echo '@~/dotfiles/claude/.claude/CLAUDE.md' > ~/.claude/CLAUDE.md
 ```
 
 ## Theme system
