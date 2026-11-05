@@ -63,7 +63,7 @@ Such a prompt would stall the shell or wait on a dialog nobody sees. Instead, te
 
 ### Clean up after yourself
 
-When you're done with what you opened, call `(kdb-claude-cleanup ID)`. It closes the windows you opened and kills the buffers and shells you started. It keeps anything with unsaved changes, and anything the user already had open. Do this before ending a task, not between steps you're still working on. The same cleanup runs when your session ends.
+When you're done with what you opened, call `(kdb-claude-cleanup ID)`. It closes the windows you opened and kills the buffers and shells you started. It keeps anything with unsaved changes, anything the user already had open or has used (a shell they ran a block in), and anything another session still uses. Sessions in the same project share one shell. Do this before ending a task, not between steps you're still working on. The same cleanup runs when your session ends.
 
 Leave things open when the user asked for them ("open X", "show me Y", "run the server") or invoked a skill that opens them. Those are theirs to close.
 
