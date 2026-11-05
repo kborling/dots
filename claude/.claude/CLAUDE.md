@@ -65,7 +65,9 @@ Such a prompt would stall the shell or wait on a dialog nobody sees. Instead, te
 
 When you're done with what you opened, call `(kdb-claude-cleanup ID)`. It closes the windows you opened and kills the buffers and shells you started. It keeps anything with unsaved changes, and anything the user already had open. Do this before ending a task, not between steps you're still working on. The same cleanup runs when your session ends.
 
-Leave things open when the user asked for them ("open X", "show me Y", "run the server") or invoked a skill that opens them. Those are theirs to close. Say what you left open, if anything.
+Leave things open when the user asked for them ("open X", "show me Y", "run the server") or invoked a skill that opens them. Those are theirs to close.
+
+In your reply, say what you closed and what you left open. A window that vanishes without explanation looks like something the user did.
 
 ### Tests and byte-compiling ~/.emacs.d
 
