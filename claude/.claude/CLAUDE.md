@@ -77,7 +77,7 @@ Run this config's ERT suites and byte-compiling in `emacs --batch`, not in the u
 
 You can start sibling sessions and message them yourself, instead of asking the user to open one. Use this for parallel or follow-up work, for example "fix this in a worktree and tell me when CI is green".
 
-- `(kdb-claude-spawn DIR PROMPT FROM BRANCH)` starts a session and prints its id. Pass your own id as FROM, and the child's prompt ends with instructions to report back to you. BRANCH is optional: if given, the child works in that branch's own worktree beside the repo (the branch is created if needed, and the main checkout is never switched). Otherwise it works in DIR. The child opens in its project's tab without taking the user's focus.
+- `(kdb-claude-spawn DIR PROMPT FROM BRANCH)` starts a session and prints its id. Pass your own id as FROM, and the child's prompt ends with instructions to report back to you. BRANCH is optional: if given, the child works in that branch's own worktree beside the repo (the branch is created if needed, and the main checkout is never switched). Otherwise it works in DIR. The child opens in a tab of its own without taking the user's focus.
 - `(kdb-claude-message TO TEXT FROM)` sends TEXT to session TO. It arrives when TO's current turn is over. Use it to follow up with a child, or to answer a session that messaged you. Messages you receive start with `[Message from Claude session ID]`.
 
 Use a trailing slash on DIR. A child can't see your conversation, so make its PROMPT self-contained. Tell the user which sessions you started and why. Don't wait or poll for a reply: end your turn, and the reply arrives as a new message.
